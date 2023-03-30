@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Union, Optional
+from typing import Union, Optional, Any
 
 
 class Variant:
@@ -31,24 +31,35 @@ class Variant:
 
 
 class Blockstate:
+    """
+    A class defining what a blockstate contains. Automatically writes the file after construction
+    """
     textures: dict[str, str]
     variants: dict[str, Variant]
     uvLock: bool
 
-    def __init__(self, name: str, textures: dict[str, str], variants: dict[str, Variant], uvLock = False):
+    def __init__(self, name: str, textures: Optional[dict[str, str]], variants: dict[str, Variant], uvLock = False):
+        """
+        Mommy blockstate, generates a blockstate file with the passed in textures and variants
+
+        :param name: The file name/path from the blockstates folder
+        :param textures: A dictionary of textures <key>:<texture>
+        :param variants: A dictionary of the variants, <key>:<Variant> pairs
+        """
         self.textures = textures
         self.variants = variants
         self.uvLock = uvLock
         self.write(name)
 
-    def dict_build(self) -> dict[str, Union[str, int, bool]]:
-        blockState: dict[str, any] = {
-            "forge_marker": 1,
-            "defaults": {
-                "textures": self.textures
-            },
-            "variants": {}
-        }
+    def dict_build(self) -> dict[str, Any]:
+
+        blockState: dict = {}
+
+        if self.textures:
+            blockState["forge_marker"] = 1
+            blockState["defaults"] = {"textures": self.textures}
+
+        blockState["variants"] = {}
 
         if self.uvLock:
             blockState["defaults"]["uvlock"] = self.uvLock
@@ -153,6 +164,11 @@ STAIR_VARIANTS: dict[str, Variant] = {
     "facing=west,half=top,shape=inner_left": Variant("outer_stairs", (180, 180, 0)),
 }
 
+SLAB_VARIANTS: dict[str, Variant] = {
+    "half=bottom": Variant("half_slab"),
+    "half=top": Variant("upper_slab")
+}
+
 
 class Stairs(Blockstate):
 
@@ -162,7 +178,18 @@ class Stairs(Blockstate):
         super().__init__(name, textures, STAIR_VARIANTS, True)
 
 
+class Slab(Blockstate):
+
+    def __init__(self, name: str, textures: Union[dict[str, str], str], fullBlockModel: str):
+        if type(textures) is str:
+            textures = {"top": textures, "bottom": textures, "side": textures}
+        super().__init__(f"{name}_slab", textures, SLAB_VARIANTS)
+        Blockstate(f"{name}_double_slab", None, {"normal": Variant(fullBlockModel)})
+
+
 if __name__ == "__main__":
+    print("This is meant to be imported, running it as a script will do tests")
+
     os.chdir("test")
     Blockstate("test_blockstate", {"top": "blocks/test",
                                    "bottom": "blocks/test",
@@ -171,3 +198,4 @@ if __name__ == "__main__":
     Model("test_model", {"test": "blocks/test"}, "block/cube_all")
     Item("test_item", "items/test")
     Block("test_block", "blocks/test")
+    Slab("test", "blocks/test", "test_block")
