@@ -4,18 +4,28 @@ from typing import Union, Optional, Any
 
 
 class Variant:
+    """
+    A class containing a model, and any extra transformations applied as a tuple used for easily creating a Blockstate
+    """
     model: str
     x: int
     y: int
     z: int
 
     def __init__(self, model: str, rotation: tuple[int, int, int] = (0, 0, 0)):
+        """
+        :param model: The model this variant applies
+        :param rotation: The model rotations this variant should apply as a tuple (x, y, z)
+        """
         self.model = model
         self.x = rotation[0]
         self.y = rotation[1]
         self.z = rotation[2]
 
     def unpack(self) -> dict[str, Union[str, int, bool]]:
+        """
+        :return: The dictionary representation of the variant used for Json output
+        """
         variantJson: dict[str, Union[str, int, bool]] = {"model": self.model}
 
         if self.x != 0:
@@ -43,7 +53,7 @@ class Blockstate:
         Mommy blockstate, generates a blockstate file with the passed in textures and variants
 
         :param name: The file name/path from the blockstates folder
-        :param textures: A dictionary of textures <key>:<texture>
+        :param textures: A dictionary of textures <key>:<texture> or None (for model applied textures)
         :param variants: A dictionary of the variants, <key>:<Variant> pairs
         """
         self.textures = textures
@@ -52,7 +62,12 @@ class Blockstate:
         self.write(name)
 
     def dict_build(self) -> dict[str, Any]:
+        """
+        Builds the dictionary representation of the Blockstate, used in writing the Json output
+        :return: Dictionary representation of the Blockstate
+        """
 
+        # Initialize as an empty dict, so we don't force Forge Blockstates
         blockState: dict = {}
 
         if self.textures:
@@ -171,20 +186,38 @@ SLAB_VARIANTS: dict[str, Variant] = {
 
 
 class Stairs(Blockstate):
+    """
+    A class for simple Stair Blockstates
+    """
 
     def __init__(self, name: str, textures: Union[dict[str, str], str]):
+        """
+        :param name: Name for the file including relative path from /blockstates/
+        :param textures: Either a dict of <key>:<texture> pairs or a single string which is applied to the top, bottom and side
+        """
         if type(textures) is str:
             textures = {"top": textures, "bottom": textures, "side": textures}
         super().__init__(name, textures, STAIR_VARIANTS, True)
 
 
 class Slab(Blockstate):
+    """
+    A class for simple Slab Blockstates
+    """
 
     def __init__(self, name: str, textures: Union[dict[str, str], str], fullBlockModel: str):
+        """
+        Creates Blockstates for Half slab and a full Block slab.
+        Expects only the "half=bottom" and "half=top" variants, may need a custom state mapping on Java end
+
+        :param name: For the file including relative path from /blockstates/<slab | double_slab>/
+        :param textures: Either a dict of <key>:<texture> pairs or a single string which is applied to the top, bottom and side
+        :param fullBlockModel: Path to the model that should be used for the full block slab
+        """
         if type(textures) is str:
             textures = {"top": textures, "bottom": textures, "side": textures}
-        super().__init__(f"{name}_slab", textures, SLAB_VARIANTS)
-        Blockstate(f"{name}_double_slab", None, {"normal": Variant(fullBlockModel)})
+        super().__init__(f"slab/{name}", textures, SLAB_VARIANTS)
+        Blockstate(f"double_slab/{name}", None, {"normal": Variant(fullBlockModel)})
 
 
 if __name__ == "__main__":
