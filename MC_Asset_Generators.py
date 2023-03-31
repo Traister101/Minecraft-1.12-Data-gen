@@ -91,6 +91,12 @@ class Blockstate:
             json.dump(self.dict_build(), file, indent=2)
 
 
+class CubeAll(Blockstate):
+
+    def __init__(self, name: str, texture: str):
+        super().__init__(name, {"all": texture}, {"normal": Variant("cube_all")})
+
+
 class Model:
     parent: str
     textures: dict[str, str]
@@ -127,7 +133,7 @@ class Block(Model):
 
 
 STAIR_VARIANTS: dict[str, Variant] = {
-    # "normal": Variant("stairs"),
+    "normal": Variant("stairs"),
     "facing=north,half=bottom,shape=straight": Variant("stairs", (0, 270, 0)),
     "facing=east,half=bottom,shape=straight": Variant("stairs"),
     "facing=west,half=bottom,shape=straight": Variant("stairs", (0, 180, 0)),
@@ -180,6 +186,7 @@ STAIR_VARIANTS: dict[str, Variant] = {
 }
 
 SLAB_VARIANTS: dict[str, Variant] = {
+    "normal": Variant("half_slab"),
     "half=bottom": Variant("half_slab"),
     "half=top": Variant("upper_slab")
 }
@@ -205,19 +212,17 @@ class Slab(Blockstate):
     A class for simple Slab Blockstates
     """
 
-    def __init__(self, name: str, textures: Union[dict[str, str], str], fullBlockModel: str):
+    def __init__(self, name: str, texture: str):
         """
         Creates Blockstates for Half slab and a full Block slab.
         Expects only the "half=bottom" and "half=top" variants, may need a custom state mapping on Java end
 
         :param name: For the file including relative path from /blockstates/<slab | double_slab>/
-        :param textures: Either a dict of <key>:<texture> pairs or a single string which is applied to the top, bottom and side
-        :param fullBlockModel: Path to the model that should be used for the full block slab
+        :param texture: Either a dict of <key>:<texture> pairs or a single string which is applied to the top, bottom and side
         """
-        if type(textures) is str:
-            textures = {"top": textures, "bottom": textures, "side": textures}
-        super().__init__(f"slab/{name}", textures, SLAB_VARIANTS)
-        Blockstate(f"double_slab/{name}", None, {"normal": Variant(fullBlockModel)})
+        Blockstate(f"double_slab/{name}", {"all": texture}, {"normal": Variant("cube_all")})
+        texture = {"top": texture, "bottom": texture, "side": texture}
+        super().__init__(f"slab/{name}", texture, SLAB_VARIANTS)
 
 
 class Ingredient:
@@ -242,9 +247,9 @@ class Ingredient:
         return itemIngredient
 
 
-Pattern = list[str, str, str]
+Pattern = list[str]
 """
-A list of 3 strings which each contain 3 "slots"
+3 strings each representing 3 slots using a letter or space for air
 """
 
 
@@ -273,25 +278,29 @@ class Result:
         return recipeResult
 
 
-class ShapedRecipe:
+class Recipe:
+    recipeType: str
     pattern: Pattern
     ingredients: dict[str, Ingredient]
     result: Result
 
-    def __init__(self, name: str, pattern: Pattern, ingredients: dict[str, Ingredient], result: Result):
+    def __init__(self, name: str, recipeType: str, pattern: Pattern, ingredients: dict[str, Ingredient],
+                 result: Result):
         """
-        :param name: Of this recipe
+        :param name: Name of this recipe
+        :param recipeType: Type of this recipe
         :param pattern: The recipe pattern
         :param ingredients: A <key>:<ingredient> pair
         :param result: The recipe output
         """
+        self.recipeType = recipeType
         self.pattern = pattern
         self.ingredients = ingredients
         self.result = result
         self.write(name)
 
     def build(self) -> dict:
-        recipe: dict = {"type": "minecraft:crafting_shaped"}
+        recipe: dict = {"type": self.recipeType}
 
         if self.pattern:
             recipe["pattern"] = self.pattern
@@ -312,8 +321,15 @@ class ShapedRecipe:
             json.dump(self.build(), file, indent=2)
 
 
+class ShapedRecipe(Recipe):
+
+    def __init__(self, name: str, pattern: Pattern, ingredients: dict[str, Ingredient], result: Result):
+        super().__init__(name, "minecraft:crafting_shaped", pattern, ingredients, result)
+
+
 class ShapelessRecipe:
     ingredients: list[Ingredient]
+    result: Result
 
     def __init__(self, name: str, ingredients: list[Ingredient], result: Result):
         self.ingredients = ingredients
@@ -337,6 +353,18 @@ class ShapelessRecipe:
             json.dump(self.build(), file, indent=2)
 
 
+class SlabRecipe(ShapedRecipe):
+
+    def __init__(self, name: str, parentBlock: str, result: Result):
+        super().__init__(name, ["XXX"], {"X": Ingredient(itemID=parentBlock)}, result)
+
+
+class StairsRecipe(ShapedRecipe):
+
+    def __init__(self, name: str, parentBlock: str, result: Result):
+        super().__init__(name, ["X  ", "XX ", "XXX"], {"X": Ingredient(itemID=parentBlock)}, result)
+
+
 if __name__ == "__main__":
     print("This is meant to be imported, running it as a script will do tests")
 
@@ -348,10 +376,18 @@ if __name__ == "__main__":
     Model("test_model", {"test": "blocks/test"}, "block/cube_all")
     Item("test_item", "items/test")
     Block("test_block", "blocks/test")
-    Slab("test", "blocks/test", "test_block")
+    Slab("test", "blocks/test")
 
-    ShapedRecipe("test_shaped", [" I ", " I ", " S "],
+    ShapedRecipe("test_shaped", [" I ", " S ", " S "],
+                 {"I": Ingredient(ore="ingotIron"), "S": Ingredient(ore="stick")},
+                 Result("minecraft:iron_shovel"))
+
+    ShapedRecipe("test_shaped_smaller", [" I "],
                  {"I": Ingredient(itemID="iron_ingot"), "S": Ingredient(ore="stick")},
-                 Result("id:test"))
+                 Result("minecraft:dirt"))
 
     ShapelessRecipe("test_shapeless", [Ingredient(itemID="id:test")], Result("id:test"))
+
+    SlabRecipe("test_slab", "minecraft:dirt", Result("minecraft:stone_slab"))
+
+    StairsRecipe("test_stairs", "minecraft:dirt", Result("minecraft:stone_slab"))
