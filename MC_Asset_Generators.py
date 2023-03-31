@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Union, Optional, Any
+from typing import Union, Optional, Any, Dict
 
 
 class Variant:
@@ -220,6 +220,123 @@ class Slab(Blockstate):
         Blockstate(f"double_slab/{name}", None, {"normal": Variant(fullBlockModel)})
 
 
+class Ingredient:
+    itemID: Optional[str]
+    itemMeta: int
+    ore: Optional[str]
+
+    def __init__(self, /, *, itemID: str = None, itemMeta = 0, ore: str = None):
+        self.itemID = itemID
+        self.itemMeta = itemMeta
+        self.ore = ore
+
+    def build(self) -> dict:
+        if self.ore:
+            return {"type": "forge:ore_dict",
+                    "ore": self.ore}
+
+        itemIngredient = {"item": self.itemID}
+
+        if self.itemMeta > 0:
+            itemIngredient["data"] = self.itemMeta
+        return itemIngredient
+
+
+Pattern = list[str, str, str]
+"""
+A list of 3 strings which each contain 3 "slots"
+"""
+
+
+class Result:
+    itemID: str
+    count: int
+    metaData: int
+
+    def __init__(self, itemID: str, count = 1, metaData = 0):
+        self.itemID = itemID
+        if count < 1:
+            raise ValueError("Count can't be less than 1")
+
+        self.count = count
+        self.metaData = metaData
+
+    def build(self) -> dict[str, Union[str, int]]:
+        recipeResult = {"item": self.itemID}
+
+        if self.count > 1:
+            recipeResult["count"] = self.count
+
+        if self.metaData > 0:
+            recipeResult["data"] = self.metaData
+
+        return recipeResult
+
+
+class ShapedRecipe:
+    pattern: Pattern
+    ingredients: dict[str, Ingredient]
+    result: Result
+
+    def __init__(self, name: str, pattern: Pattern, ingredients: dict[str, Ingredient], result: Result):
+        """
+        :param name: Of this recipe
+        :param pattern: The recipe pattern
+        :param ingredients: A <key>:<ingredient> pair
+        :param result: The recipe output
+        """
+        self.pattern = pattern
+        self.ingredients = ingredients
+        self.result = result
+        self.write(name)
+
+    def build(self) -> dict:
+        recipe: dict = {"type": "minecraft:crafting_shaped"}
+
+        if self.pattern:
+            recipe["pattern"] = self.pattern
+
+        recipe["key"] = {}
+
+        for key, ingredient in self.ingredients.items():
+            recipe["key"][key] = ingredient.build()
+
+        recipe["result"] = self.result.build()
+
+        return recipe
+
+    def write(self, name: str):
+        file = os.path.join("recipes", name) + ".json"
+        os.makedirs(os.path.dirname(file), exist_ok=True)
+        with open(file, "w") as file:
+            json.dump(self.build(), file, indent=2)
+
+
+class ShapelessRecipe:
+    ingredients: list[Ingredient]
+
+    def __init__(self, name: str, ingredients: list[Ingredient], result: Result):
+        self.ingredients = ingredients
+        self.result = result
+        self.write(name)
+
+    def build(self) -> dict[str]:
+        recipe = {"type": "minecraft:crafting_shapeless"}
+
+        for ingredient in self.ingredients:
+            recipe["ingredients"] = ingredient.build()
+
+        recipe["result"] = self.result.build()
+
+        return recipe
+
+    def write(self, name: str):
+        file = os.path.join("recipes", name) + ".json"
+        os.makedirs(os.path.dirname(file), exist_ok=True)
+        with open(file, "w") as file:
+            json.dump(self.build(), file, indent=2)
+
+
 if __name__ == "__main__":
     print("This is meant to be imported, running it as a script will do tests")
 
@@ -232,3 +349,9 @@ if __name__ == "__main__":
     Item("test_item", "items/test")
     Block("test_block", "blocks/test")
     Slab("test", "blocks/test", "test_block")
+
+    ShapedRecipe("test_shaped", [" I ", " I ", " S "],
+                 {"I": Ingredient(itemID="iron_ingot"), "S": Ingredient(ore="stick")},
+                 Result("id:test"))
+
+    ShapelessRecipe("test_shapeless", [Ingredient(itemID="id:test")], Result("id:test"))
