@@ -1,6 +1,8 @@
-from typing import Union, Optional
+import json
+import os
+from typing import Union, Optional, Any
 
-from BlockstateVariants import STAIR_VARIANTS, SLAB_VARIANTS, Variant
+from .BlockstateVariants import STAIR_VARIANTS, SLAB_VARIANTS, Variant
 
 
 class Blockstate:
