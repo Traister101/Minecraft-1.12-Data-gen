@@ -13,7 +13,7 @@ class Model:
         self.write(name)
 
     def write(self, name: str):
-        file = os.path.join("../models", name) + ".json"
+        file = os.path.join("models", name) + ".json"
         os.makedirs(os.path.dirname(file), exist_ok=True)
         with open(file, "w") as file:
             json.dump({

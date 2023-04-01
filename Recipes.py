@@ -46,12 +46,14 @@ class Result:
     itemID: str
     count: int
     metaData: int
+    hasSubtypes: bool
 
-    def __init__(self, itemID: str, count = 1, metaData = 0):
+    def __init__(self, itemID: str, count = 1, metaData = 0, hasSubtypes = False):
         """
         :param itemID: Registry key of an item including mod ID
         :param count: The output stack size
         :param metaData: The metadata of the item result
+        :param hasSubtypes: If this result needs the metadata attribute
         """
         self.itemID = itemID
         if count < 1:
@@ -59,6 +61,7 @@ class Result:
 
         self.count = count
         self.metaData = metaData
+        self.hasSubtypes = hasSubtypes
 
     def build(self) -> dict[str, Union[str, int]]:
         recipeResult = {"item": self.itemID}
@@ -66,7 +69,7 @@ class Result:
         if self.count > 1:
             recipeResult["count"] = self.count
 
-        if self.metaData > 0:
+        if self.metaData > 0 or self.hasSubtypes:
             recipeResult["data"] = self.metaData
 
         return recipeResult
@@ -160,7 +163,7 @@ class SlabRecipe(ShapedRecipe):
         :param parentItem: The parent item which is used for the slab recipe
         :param slabItem: The item used for the resulting slab output
         """
-        super().__init__(name, ["XXX"], {"X": Ingredient(itemID=parentItem)}, Result(slabItem, 6, 0))
+        super().__init__(name, ["XXX"], {"X": Ingredient(itemID=parentItem)}, Result(slabItem, 6, 0, True))
 
 
 class StairsRecipe(ShapedRecipe):
