@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, Final
 
 
 class Variant:
@@ -38,7 +38,7 @@ class Variant:
         return variantJson
 
 
-STAIR_VARIANTS: dict[str, Variant] = {
+STAIR_VARIANTS: Final[dict[str, Variant]] = {
     "normal": Variant("stairs"),
     "facing=north,half=bottom,shape=straight": Variant("stairs", (0, 270, 0)),
     "facing=east,half=bottom,shape=straight": Variant("stairs"),
@@ -94,11 +94,49 @@ STAIR_VARIANTS: dict[str, Variant] = {
 All the stair variants
 """
 
-SLAB_VARIANTS: dict[str, Variant] = {
+SLAB_VARIANTS: Final[dict[str, Variant]] = {
     "normal": Variant("half_slab"),
     "half=bottom": Variant("half_slab"),
     "half=top": Variant("upper_slab")
 }
 """
 All the slab variants
+"""
+
+DOOR_VARIANTS: Final[dict[str, Variant]] = {
+    "facing=east,half=lower,hinge=left,open=false": Variant("door_bottom"),
+    "facing=south,half=lower,hinge=left,open=false": Variant("door_bottom", (0, 90, 0)),
+    "facing=west,half=lower,hinge=left,open=false": Variant("door_bottom", (0, 180, 0)),
+    "facing=north,half=lower,hinge=left,open=false": Variant("door_bottom", (0, 270, 0)),
+    "facing=east,half=lower,hinge=right,open=false": {"model": "acacia_door_bottom_rh"},
+    "facing=south,half=lower,hinge=right,open=false": {"model": "acacia_door_bottom_rh", "y": 90},
+    "facing=west,half=lower,hinge=right,open=false": {"model": "acacia_door_bottom_rh", "y": 180},
+    "facing=north,half=lower,hinge=right,open=false": {"model": "acacia_door_bottom_rh", "y": 270},
+    "facing=east,half=lower,hinge=left,open=true": {"model": "acacia_door_bottom_rh", "y": 90},
+    "facing=south,half=lower,hinge=left,open=true": {"model": "acacia_door_bottom_rh", "y": 180},
+    "facing=west,half=lower,hinge=left,open=true": {"model": "acacia_door_bottom_rh", "y": 270},
+    "facing=north,half=lower,hinge=left,open=true": {"model": "acacia_door_bottom_rh"},
+    "facing=east,half=lower,hinge=right,open=true": {"model": "acacia_door_bottom", "y": 270},
+    "facing=south,half=lower,hinge=right,open=true": {"model": "acacia_door_bottom"},
+    "facing=west,half=lower,hinge=right,open=true": {"model": "acacia_door_bottom", "y": 90},
+    "facing=north,half=lower,hinge=right,open=true": {"model": "acacia_door_bottom", "y": 180},
+    "facing=east,half=upper,hinge=left,open=false": {"model": "acacia_door_top"},
+    "facing=south,half=upper,hinge=left,open=false": {"model": "acacia_door_top", "y": 90},
+    "facing=west,half=upper,hinge=left,open=false": {"model": "acacia_door_top", "y": 180},
+    "facing=north,half=upper,hinge=left,open=false": {"model": "acacia_door_top", "y": 270},
+    "facing=east,half=upper,hinge=right,open=false": {"model": "acacia_door_top_rh"},
+    "facing=south,half=upper,hinge=right,open=false": {"model": "acacia_door_top_rh", "y": 90},
+    "facing=west,half=upper,hinge=right,open=false": {"model": "acacia_door_top_rh", "y": 180},
+    "facing=north,half=upper,hinge=right,open=false": {"model": "acacia_door_top_rh", "y": 270},
+    "facing=east,half=upper,hinge=left,open=true": {"model": "acacia_door_top_rh", "y": 90},
+    "facing=south,half=upper,hinge=left,open=true": {"model": "acacia_door_top_rh", "y": 180},
+    "facing=west,half=upper,hinge=left,open=true": {"model": "acacia_door_top_rh", "y": 270},
+    "facing=north,half=upper,hinge=left,open=true": {"model": "acacia_door_top_rh"},
+    "facing=east,half=upper,hinge=right,open=true": {"model": "acacia_door_top", "y": 270},
+    "facing=south,half=upper,hinge=right,open=true": {"model": "acacia_door_top"},
+    "facing=west,half=upper,hinge=right,open=true": {"model": "acacia_door_top", "y": 90},
+    "facing=north,half=upper,hinge=right,open=true": {"model": "acacia_door_top", "y": 180}
+}
+"""
+All the door variants
 """
