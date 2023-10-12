@@ -13,7 +13,7 @@ class Lang:
         :param local: The lang local to write
         """
         os.makedirs(os.path.dirname(f"lang/{local}.lang"), exist_ok=True)
-        self.file = open(f"lang/{local}.lang", "w")
+        self.file = open(f"lang/{local}.lang", "w", encoding="UTF-8")
 
     def writeHeader(self, header: str) -> None:
         """
